@@ -17,21 +17,21 @@ class Auth extends ResourceController
         $required = ['email', 'password', 'name', 'role'];
         foreach ($required as $f) {
             if (empty($data[$f])) {
-                return $this->failValidationError("Missing required field: {$f}");
+                return $this->fail("Missing required field: {$f}", 422);
             }
         }
 
         $role = strtolower($data['role']);
         $allowedRoles = ['end_user', 'service_provider', 'admin'];
         if (! in_array($role, $allowedRoles, true)) {
-            return $this->failValidationError('Invalid role. Allowed: end_user, service_provider, admin');
+            return $this->fail('Invalid role. Allowed: end_user, service_provider, admin', 422);
         }
 
         $userModel = new UserModel();
 
         // email uniqueness
         if ($userModel->where('email', $data['email'])->first()) {
-            return $this->failValidationError('Email already registered');
+            return $this->fail('Email already registered', 422);
         }
 
         $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
@@ -65,7 +65,7 @@ class Auth extends ResourceController
         $data = $this->request->getJSON(true) ?? [];
 
         if (empty($data['email']) || empty($data['password'])) {
-            return $this->failValidationError('Email and password required');
+            return $this->fail('Email and password required', 422);
         }
 
         $userModel = new UserModel();
