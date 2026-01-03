@@ -35,7 +35,12 @@ class Auth extends ResourceController
         }
 
         $passwordHash = password_hash($data['password'], PASSWORD_DEFAULT);
-        $apiToken = bin2hex(random_bytes(32));
+        try {
+            $apiToken = bin2hex(random_bytes(32));
+        } catch (\Throwable $e) {
+            // fallback if random_bytes fails
+            $apiToken = bin2hex(openssl_random_pseudo_bytes(32));
+        }
 
         $insertData = [
             'name' => $data['name'],
@@ -47,16 +52,26 @@ class Auth extends ResourceController
             'api_token' => $apiToken,
         ];
 
-        $id = $userModel->insert($insertData);
+        try {
+            $id = $userModel->insert($insertData);
+        } catch (\Throwable $e) {
+            // log and return a readable error instead of empty 500
+            // ...existing error logging if you have one...
+            return $this->failServerError('Unable to create user: ' . $e->getMessage());
+        }
 
         if ($id === false) {
             return $this->failServerError('Unable to create user');
         }
 
+        // load created user (ensure consistent data)
+        $created = $userModel->find($id);
+
         return $this->respondCreated([
-            'id' => $id,
-            'email' => $data['email'],
-            'api_token' => $apiToken,
+            'id' => $created['id'] ?? $id,
+            'email' => $created['email'] ?? $data['email'],
+            'role' => $created['role'] ?? $role,
+            'api_token' => $created['api_token'] ?? $apiToken,
         ]);
     }
 
@@ -77,7 +92,11 @@ class Auth extends ResourceController
 
         // ensure api_token exists
         if (empty($user['api_token'])) {
-            $user['api_token'] = bin2hex(random_bytes(32));
+            try {
+                $user['api_token'] = bin2hex(random_bytes(32));
+            } catch (\Throwable $e) {
+                $user['api_token'] = bin2hex(openssl_random_pseudo_bytes(32));
+            }
             $userModel->update($user['id'], ['api_token' => $user['api_token']]);
         }
 
