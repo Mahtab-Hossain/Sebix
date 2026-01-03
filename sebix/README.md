@@ -66,3 +66,42 @@ Additionally, make sure that the following extensions are enabled in your PHP:
 - json (enabled by default - don't turn it off)
 - [mysqlnd](http://php.net/manual/en/mysqlnd.install.php) if you plan to use MySQL
 - [libcurl](http://php.net/manual/en/curl.requirements.php) if you plan to use the HTTP\CURLRequest library
+
+## Functional requirements — detailed (one by one)
+
+1. User Authentication & Registration
+   - 1.1 Register (all roles): user can create account with email, password, name, phone, location, and select role (End User, Service Provider, Admin).
+     - Acceptance: registration returns success and creates a user record with role.
+   - 1.2 Login: email + password authentication and session/token issuance.
+     - Acceptance: valid credentials return authenticated session/token; invalid credentials return error.
+   - 1.3 Role-based access control: endpoint/middleware enforces role permissions.
+     - Acceptance: protected endpoints allow only permitted roles.
+
+2. End User Features
+   - 2.1 Search services by category and location.
+     - Acceptance: search API returns matching providers with distance and category filters.
+   - 2.2 View provider profile (services, rates, availability, contact).
+     - Acceptance: profile endpoint returns full provider details.
+   - 2.3 Book a service (select provider, select date/time, confirm).
+     - Acceptance: booking is created with status "pending" and notifies provider.
+   - 2.4 View booking history and status.
+     - Acceptance: user can list past and upcoming bookings with statuses.
+
+3. Service Provider Features
+   - 3.1 Create and edit profile (services offered, rates, availability, location).
+     - Acceptance: provider profile endpoints allow CRUD of profile fields.
+   - 3.2 Receive and respond to booking requests (accept/reject).
+     - Acceptance: provider can change booking status; user sees updated status.
+   - 3.3 View booking history and status.
+     - Acceptance: provider booking list shows requests and past bookings.
+
+4. Admin Features (basic MVP oversight)
+   - 4.1 Manage users (view, deactivate).
+     - Acceptance: admin can list users and disable accounts.
+   - 4.2 Monitor bookings and locations (basic reporting).
+     - Acceptance: admin can list bookings filtered by location/status.
+
+5. Data & API notes (implementation hints)
+   - 5.1 Core entities: User (role), ProviderProfile, ServiceCategory, Booking, Availability.
+   - 5.2 Minimal API endpoints: /auth/register, /auth/login, /providers (search, profile), /bookings (create, list, update), /admin/users, /admin/bookings.
+   - 5.3 Acceptance criteria: every function above includes an API response and DB state change test.
